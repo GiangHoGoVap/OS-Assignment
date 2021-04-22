@@ -13,7 +13,7 @@ static struct {
 			// to the process.
 	int next;	// The next page in the list. -1 if it is the last
 			// page.
-} _mem_stat [NUM_PAGES];
+} _mem_stat[NUM_PAGES];
 
 static pthread_mutex_t mem_lock;
 
@@ -40,20 +40,20 @@ static addr_t get_second_lv(addr_t addr) {
 
 /* Search for page table table from the a segment table */
 static struct page_table_t * get_page_table(
-		addr_t index, 	// Segment level index
-		struct seg_table_t * seg_table) { // first level table
-	
-	/*
-	 * TODO: Given the Segment index [index], you must go through each
-	 * row of the segment table [seg_table] and check if the v_index
-	 * field of the row is equal to the index
-	 *
-	 * */
+	addr_t index, 	// Segment level index
+	struct seg_table_t * seg_table) { // first level table
+
+/*
+ * TODO: Given the Segment index [index], you must go through each
+ * row of the segment table [seg_table] and check if the v_index
+ * field of the row is equal to the index
+ *
+ * */
 
 	int i;
 	for (i = 0; i < seg_table->size; i++) {
 		// Enter your code here
-		if (seg_table->table[i].v_index == index){
+		if (seg_table->table[i].v_index == index) {
 			return seg_table->table[i].pages;
 		}
 	}
@@ -65,17 +65,17 @@ static struct page_table_t * get_page_table(
  * return 1 and write its physical counterpart to [physical_addr].
  * Otherwise, return 0 */
 static int translate(
-		addr_t virtual_addr, 	// Given virtual address
-		addr_t * physical_addr, // Physical address to be returned
-		struct pcb_t * proc) {  // Process uses given virtual address
+	addr_t virtual_addr, 	// Given virtual address
+	addr_t * physical_addr, // Physical address to be returned
+	struct pcb_t * proc) {  // Process uses given virtual address
 
-	/* Offset of the virtual address */
+/* Offset of the virtual address */
 	addr_t offset = get_offset(virtual_addr);
 	/* The first layer index */
 	addr_t first_lv = get_first_lv(virtual_addr);
 	/* The second layer index */
 	addr_t second_lv = get_second_lv(virtual_addr);
-	
+
 	/* Search in the first level */
 	struct page_table_t * page_table = NULL;
 	page_table = get_page_table(first_lv, proc->seg_table);
@@ -87,14 +87,14 @@ static int translate(
 	for (i = 0; i < page_table->size; i++) {
 		if (page_table->table[i].v_index == second_lv) {
 			/* TODO: Concatenate the offset of the virtual addess
-			 * to [p_index] field of page_table->table[i] to 
+			 * to [p_index] field of page_table->table[i] to
 			 * produce the correct physical address and save it to
 			 * [*physical_addr]  */
 			*physical_addr = (page_table->table[i].p_index << OFFSET_LEN) | offset;
 			return 1;
 		}
 	}
-	return 0;	
+	return 0;
 }
 
 addr_t alloc_mem(uint32_t size, struct pcb_t * proc) {
@@ -111,20 +111,21 @@ addr_t alloc_mem(uint32_t size, struct pcb_t * proc) {
 
 	/* First we must check if the amount of free memory in
 	 * virtual address space and physical address space is
-	 * large enough to represent the amount of required 
+	 * large enough to represent the amount of required
 	 * memory. If so, set 1 to [mem_avail].
 	 * Hint: check [proc] bit in each page of _mem_stat
 	 * to know whether this page has been used by a process.
 	 * For virtual memory space, check bp (break pointer).
 	 * */
+	int free_pages_idx[num_pages];
 	int freePages = 0;
-	for (int i=0; i<NUM_PAGES; i++){
-		if (_mem_stat[i].proc == 0){
+	for (int i = 0; i < NUM_PAGES; i++) {
+		if (_mem_stat[i].proc == 0) {
 			freePages++;
 		}
 	}
 	if (freePages >= num_pages) mem_avail = 1;
-	if (proc->bp + num_pages*PAGE_SIZE >= RAM_SIZE) mem_avail = 0;
+	if (proc->bp + num_pages * PAGE_SIZE >= RAM_SIZE) mem_avail = 0;
 
 	if (mem_avail) {
 		/* We could allocate new memory region to the process */
@@ -158,7 +159,8 @@ int read_mem(addr_t address, struct pcb_t * proc, BYTE * data) {
 	if (translate(address, &physical_addr, proc)) {
 		*data = _ram[physical_addr];
 		return 0;
-	}else{
+	}
+	else {
 		return 1;
 	}
 }
@@ -168,7 +170,8 @@ int write_mem(addr_t address, struct pcb_t * proc, BYTE data) {
 	if (translate(address, &physical_addr, proc)) {
 		_ram[physical_addr] = data;
 		return 0;
-	}else{
+	}
+	else {
 		return 1;
 	}
 }
@@ -186,14 +189,14 @@ void dump(void) {
 				_mem_stat[i].next
 			);
 			int j;
-			for (	j = i << OFFSET_LEN;
-				j < ((i+1) << OFFSET_LEN) - 1;
+			for (j = i << OFFSET_LEN;
+				j < ((i + 1) << OFFSET_LEN) - 1;
 				j++) {
-				
+
 				if (_ram[j] != 0) {
 					printf("\t%05x: %02x\n", j, _ram[j]);
 				}
-					
+
 			}
 		}
 	}
