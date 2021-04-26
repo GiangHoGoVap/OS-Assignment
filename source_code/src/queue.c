@@ -18,15 +18,15 @@ struct pcb_t * dequeue(struct queue_t * q) {
 	 * */
 	if (q->size == 0) return NULL;
 	int highestPriority = 0, pos;
-	for (int i=0; i<q->size; i++){
-		if (highestPriority < q->proc[i]->priority){
+	for (int i = 0; i < q->size; i++) {
+		if (highestPriority < q->proc[i]->priority) {
 			highestPriority = q->proc[i]->priority;
 			pos = i;
 		}
 	}
 	struct pcb_t * res = q->proc[pos];
-	for (int i=pos+1; i<q->size; i++){
-		q->proc[i-1] = q->proc[i];
+	for (int i = pos + 1; i < q->size; i++) {
+		q->proc[i - 1] = q->proc[i];
 	}
 	q->size--;
 	return res;

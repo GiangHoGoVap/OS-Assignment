@@ -206,6 +206,28 @@ int free_mem(addr_t address, struct pcb_t * proc) {
      * 	  the process [proc].
      * 	- Remember to use lock to protect the memory from other
      * 	  processes.  */
+    
+    if (address < RAM_SIZE) return 0;
+    pthread_mutex_lock(&mem_lock);
+    uint32_t size = proc->bp - address;
+    uint32_t num_pages = (size % PAGE_SIZE) ? size / PAGE_SIZE : size / PAGE_SIZE + 1;
+    int* storage = (int*)malloc(sizeof(int) * num_pages);
+    int idx = 0;
+    for (int i = 0; i < proc->seg_table->size; i++) {
+        for (int j = 0; j < proc->seg_table->table[i].pages->size; j++) {
+            storage[idx++] = proc->seg_table->table[i].pages->table->p_index;
+        }
+        free(proc->seg_table->table[i].pages);
+        proc->seg_table->table[i].pages = NULL;
+    }
+    proc->seg_table->size = 0;
+    for (int i = 0; i < idx; i++){
+        _mem_stat[storage[i]].proc = 0;
+        _mem_stat[storage[i]].next = 0;
+        _mem_stat[storage[i]].index = 0;
+    }
+    pthread_mutex_unlock(&mem_lock);
+    free(storage);
     return 0;
 }
 
