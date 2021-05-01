@@ -177,11 +177,9 @@ int free_mem(addr_t address, struct pcb_t * proc) {
      * 	  the process [proc].
      * 	- Remember to use lock to protect the memory from other
      * 	  processes.  */
-
     pthread_mutex_lock(&mem_lock);
     addr_t physical_addr = -1;
     addr_t virtual_addr = address;
-    
     if (translate(virtual_addr, &physical_addr, proc)) {
         addr_t physical_page = physical_addr >> OFFSET_LEN;
         while (physical_page != -1) {
@@ -195,14 +193,32 @@ int free_mem(addr_t address, struct pcb_t * proc) {
             if (page_table == NULL)
                 break;
 
-            for (int i = 0; i < page_table->size; i++) {
+            int i = 0;
+            for (i = 0; i < page_table->size; i++) {
                 if (second_lv == page_table->table[i].v_index) {
                     page_table->table[i].v_index = -1;
                     page_table->table[i].p_index = -1;
+                    page_table->table[i] = page_table->table[--page_table->size];
                     break;
                 }
             }
+            if (page_table->size == 0) {
+                struct seg_table_t * seg_table = proc->seg_table;
+                int i = 0;
+                for (i = 0; i < seg_table->size; i++) {
+                    if (first_lv == seg_table->table[i].v_index) {
+                        int last = seg_table->size - 1;
+                        seg_table->table[i] = seg_table->table[last];
+                        seg_table->table[last].v_index = -1;
+                        free(seg_table->table[last].pages);
+                        seg_table->size--;
+                        break;
+                    }
+                }
+            }
+
             virtual_addr += PAGE_SIZE;
+            proc->bp -= PAGE_SIZE;
             physical_page = _mem_stat[physical_page].next;
         }
     }
