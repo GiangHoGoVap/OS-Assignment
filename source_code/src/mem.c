@@ -177,9 +177,11 @@ int free_mem(addr_t address, struct pcb_t * proc) {
      * 	  the process [proc].
      * 	- Remember to use lock to protect the memory from other
      * 	  processes.  */
+
     pthread_mutex_lock(&mem_lock);
     addr_t physical_addr = -1;
     addr_t virtual_addr = address;
+    
     if (translate(virtual_addr, &physical_addr, proc)) {
         addr_t physical_page = physical_addr >> OFFSET_LEN;
         while (physical_page != -1) {
@@ -218,7 +220,6 @@ int free_mem(addr_t address, struct pcb_t * proc) {
             }
 
             virtual_addr += PAGE_SIZE;
-            proc->bp -= PAGE_SIZE;
             physical_page = _mem_stat[physical_page].next;
         }
     }
